@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "gitnexus": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/gitnexus-mcp-launch.sh"
+    }
+  }
+}
