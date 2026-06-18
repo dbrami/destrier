@@ -1,0 +1,13 @@
+# Dev-only de-identification denylist (real codenames) — never published
+dev/private-denylist.txt
+# Build artifacts and machine-specific implementation notes
+docs/plans/
+# Per-repo codeman config created by commands at runtime
+.codeman/
+# Dependencies / vendored external tools (installed by /codeman-setup)
+node_modules/
+# OS / language noise
+*.log
+.DS_Store
+__pycache__/
+*.pyc

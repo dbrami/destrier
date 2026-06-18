@@ -1,0 +1,17 @@
+# codeman identifying-tokens denylist (GENERIC, safe to publish).
+# One extended-regex pattern per line. Lines starting with # are comments.
+# These are STRUCTURAL patterns that should never appear in a public repo.
+# Add your OWN project codenames to a LOCAL, gitignored file and point
+# CODEMAN_PRIVATE_DENYLIST at it (default: dev/private-denylist.txt).
+#
+# Absolute user-home paths (leak machine/user/project layout)
+/Users/[^/[:space:]]+/(Projects|Documents|Desktop|Box)/
+/home/[^/[:space:]]+/
+# dotenv / secret assignments
+^[[:space:]]*[A-Z0-9_]*(SECRET|PASSWORD|API[_-]?KEY|TOKEN)[[:space:]]*=
+# private key material
+-----BEGIN (RSA|EC|OPENSSH|DSA|PGP)? ?PRIVATE KEY-----
+# common credential token formats
+AKIA[0-9A-Z]{16}
+ghp_[0-9A-Za-z]{36}
+xox[baprs]-[0-9A-Za-z-]{10,}
