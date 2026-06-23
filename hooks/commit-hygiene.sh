@@ -47,7 +47,7 @@ if [ "$has_source" = "1" ] && ! echo "$changed" | grep -q "README\.md"; then
 fi
 
 # 3. Semantic version bumped? (only when source/config files changed)
-if [ "$has_source" = "1" ] && ! echo "$changed" | grep -qE "(package\.json|pyproject\.toml|VERSION|version\.txt|Cargo\.toml|setup\.py|build\.gradle)"; then
+if [ "$has_source" = "1" ] && ! echo "$changed" | grep -qE "(package\.json|pyproject\.toml|VERSION|version\.txt|Cargo\.toml|setup\.py|build\.gradle|plugin\.json)"; then
   warnings+=("- No version file updated — remember to bump semantic version (MAJOR.MINOR.PATCH) before tagging")
 fi
 

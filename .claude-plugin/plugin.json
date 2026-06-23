@@ -1,6 +1,6 @@
 {
   "name": "codeman",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Generic code-improvement toolkit: review/debug skills, knowledgebase session workflow, git hooks, and a bootstrap for gitnexus + roborev.",
   "author": { "name": "Daniel Brami" },
   "license": "MIT",

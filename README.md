@@ -27,7 +27,7 @@ codeman is its own Claude Code marketplace, so install is one command each:
 | Component | Type | Purpose |
 |-----------|------|---------|
 | `evidence-driven-debugging` | skill | Evidence-over-deduction habits for any debugging task. |
-| `session-handover` | skill | Maintain a durable, model-labeled knowledgebase across sessions. |
+| `session-handover` | skill | Maintain a durable, model-labeled knowledgebase across sessions as a strict [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) (OKF) v0.1 bundle — a dated session journal plus a cross-linked concept layer. |
 | `daily-recap` | SessionStart hook | Recap of last-24h commits, uncommitted changes, and unpushed counts. |
 | `commit-hygiene` | Stop hook | Warns about un-updated CLAUDE.md/README, missing version bump, and unpushed commits. |
 | `critical-path-precommit` | script | Reminds you to run gitnexus impact analysis when staged files match configured critical paths. |
@@ -39,7 +39,7 @@ codeman is its own Claude Code marketplace, so install is one command each:
 | Command | What it does |
 |---------|--------------|
 | `/codeman-setup` | Build gitnexus from git and install roborev via its official installer. |
-| `/codeman-kb-init` | Initialize today's KB session summary and show recent ones. |
+| `/codeman-kb-init` | Initialize today's KB session summary (OKF v0.1 bundle) and show recent ones. Promote durable knowledge into cross-linked concept files with `scripts/kb-concept.sh <type> "<title>"`. |
 | `/codeman-precommit-install` | Install the critical-path guard as this repo's pre-commit hook. |
 | `/codeman-security-review` | De-identification + secret scan of pending changes, plus roborev security review when available. |
 | `/codeman-flow-metrics` | Throughput and cycle-time report for one or more repos. |
