@@ -10,7 +10,7 @@ out="$(bash "$BS" --check 2>&1)"; rc=$?
 assert_exit_code 0 "$rc" "bootstrap --check exits 0"
 
 # every documented prerequisite is verified
-for t in git rg jq node npm python3 gh curl gitnexus roborev; do
+for t in git rg jq node npm python3 gh curl uv gitnexus roborev; do
   assert_contains "$out" "$t" "check reports $t"
 done
 

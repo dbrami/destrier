@@ -35,12 +35,14 @@ destrier is its own Claude Code marketplace, so install is one command each:
 | `critical-path-precommit` | script | Reminds you to run gitnexus impact analysis when staged files match configured critical paths. |
 | `flow-metrics` | script | Weekly throughput + cycle-time (p50/p85) and WIP-aging via `gh`. |
 | `security-scan` | script | De-identification + secret scan, reused by the security-review gate. |
+| `spec-kit-ext` | spec-kit extension | Bridges spec-kit's Spec-Driven Development loop into the OKF knowledgebase + flow-metrics (opt-in via `/destrier-spec-init`). |
 
 ## Commands
 
 | Command | What it does |
 |---------|--------------|
 | `/destrier-setup` | Build gitnexus from git and install roborev via its official installer. |
+| `/destrier-spec-init` | Opt-in: set up Spec-Driven Development (spec-kit) in the current repo — installs the pinned `specify` CLI, runs `specify init`, and registers destrier's bridge extension. |
 | `/destrier-kb-init` | Initialize today's KB session summary (OKF v0.1 bundle) and show recent ones. Promote durable knowledge into cross-linked concept files with `scripts/kb-concept.sh <type> "<title>"`. |
 | `/destrier-precommit-install` | Install the critical-path guard as this repo's pre-commit hook. |
 | `/destrier-security-review` | De-identification + secret scan of pending changes, plus roborev security review when available. |
@@ -64,6 +66,42 @@ destrier is its own Claude Code marketplace, so install is one command each:
 
 After setup, run `gitnexus analyze` once per repository you want indexed.
 
+## Spec-Driven Development (opt-in)
+
+destrier can bring GitHub [spec-kit](https://github.com/github/spec-kit)'s
+Spec-Driven Development (SDD) loop — `constitution → specify → plan → tasks →
+implement` — into a repo. It is **opt-in and per-repo**: run `/destrier-spec-init`
+in the repository you want to use it in.
+
+destrier **bootstraps** the upstream `specify` CLI (no vendoring, same as
+gitnexus/roborev) and integrates through spec-kit's **own extension-hook API** —
+it never forks a spec-kit command, so `specify self upgrade` keeps working. The
+integration is two layers: the plugin ships the bridge extension
+(`spec-kit-ext/`), and per repo `specify extension add … --dev` installs it into
+`.specify/`.
+
+Two optional (prompted, never auto-run) bridges:
+
+- after `/speckit.plan` — record the plan's durable decisions as a **link-only**
+  OKF knowledgebase concept (a pointer to `plan.md`, never a copy);
+- after `/speckit.taskstoissues` — run `flow-metrics` over the GitHub issues the
+  tasks became (`tasks → issues → metrics`).
+
+Establish principles with `/speckit.constitution`, fed destrier's house rules from
+`templates/destrier-constitution-values.md` (it is *input* to the command, not a
+replacement for `.specify/memory/constitution.md`).
+
+- **Requirements:** `uv` and `python3 >= 3.11` (verified by `/destrier-spec-init`).
+- **Pinning:** the `specify` CLI is pinned to a tested tag (`v0.11.6`). Upgrade
+  only via `specify self upgrade --tag <tag>`, and bump
+  `spec-kit-ext/extension.yml`'s `requires` range in lockstep.
+- **Privacy:** **set `DESTRIER_PRIVATE_DENYLIST` before authoring specs.** Spec
+  free-text is committed and scanned by the security gate; private codenames must
+  not leak — especially into a public repo.
+- **Right-sized for plugins:** for a shell/markdown project with no app build,
+  `data-model.md`/`contracts/`/`quickstart.md` are N/A; the spec → tasks →
+  implement spine is the working subset.
+
 ## Privacy
 
 destrier ships **no** personal content. A generic de-identification denylist
@@ -74,7 +112,8 @@ gitignored file and point `DESTRIER_PRIVATE_DENYLIST` at it.
 ## Requirements
 
 `git`, `rg` (ripgrep), and `jq`. Node + npm for gitnexus; `python3` and `gh` for
-flow-metrics; `curl` for the roborev installer.
+flow-metrics; `curl` for the roborev installer; `uv` + `python3 >= 3.11` for the
+opt-in Spec-Driven Development workflow (`/destrier-spec-init`).
 
 `/destrier-setup` **verifies all of these** and prints the exact install command
 for anything missing. Run `bash scripts/bootstrap.sh --install-deps` to have

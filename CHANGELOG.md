@@ -4,6 +4,32 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-06-24
+
+### Added
+- **Spec-Driven Development (spec-kit) integration** — opt-in, per-repo via the
+  new `/destrier-spec-init` command. destrier bootstraps GitHub spec-kit's
+  upstream `specify` CLI (no vendoring, same MO as gitnexus/roborev) and
+  integrates through spec-kit's **own extension-hook API** — it never forks a
+  spec-kit command, so `specify self upgrade` keeps working.
+  - `scripts/spec-init.sh` — verifies prerequisites (`uv`, `python3 >= 3.11`,
+    `git`), installs the pinned `specify` CLI (`v0.11.6`), runs `specify init`
+    idempotently, and registers destrier's bridge extension. A re-run never
+    clobbers an existing constitution or `specs/`.
+  - `spec-kit-ext/` — a spec-kit extension (`destrier-sdd`) providing two
+    optional (prompted) bridges: `after_plan` records the plan's durable
+    decisions as a **link-only** OKF knowledgebase concept (a pointer to
+    `plan.md`, never a copy); `after_taskstoissues` runs `flow-metrics` over the
+    GitHub issues the tasks became (`tasks → issues → metrics`).
+  - `templates/destrier-constitution-values.md` — destrier's house rules as
+    *input* to `/speckit.constitution` (not a replacement constitution file).
+  - `bootstrap.sh` now reports `uv` status (with the official-installer hint
+    outside Homebrew); `/destrier-setup` documents the SDD opt-in.
+  - `test/test-spec-init.sh` — manifest invariants, pin↔range version guard,
+    prereq-detection seams, hermetic idempotency, and a security-gate fixture.
+- **Privacy note:** set `DESTRIER_PRIVATE_DENYLIST` before authoring specs — spec
+  free-text is committed and scanned; private codenames must not leak.
+
 ## [0.4.0] - 2026-06-23
 
 ### Changed

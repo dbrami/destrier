@@ -61,6 +61,11 @@ pkg_name() {
 
 # Human-readable install command (for display).
 install_cmd() {
+  # uv has no apt/dnf/yum package; outside Homebrew, point at the official
+  # installer (the canonical, cross-distro path) instead of a bogus pkg command.
+  if [ "$1" = uv ] && [ "$PKG" != brew ]; then
+    echo "curl -LsSf https://astral.sh/uv/install.sh | sh"; return
+  fi
   case "$PKG" in
     brew) echo "brew install $1";;
     apt)  echo "sudo apt-get install -y $1";;
@@ -72,6 +77,10 @@ install_cmd() {
 
 # Run an install (no eval; args passed directly).
 do_install() {
+  # uv: outside Homebrew, use the official installer (no system package exists).
+  if [ "$1" = uv ] && [ "$PKG" != brew ]; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh; return
+  fi
   case "$PKG" in
     brew) brew install "$1";;
     apt)  sudo apt-get install -y "$1";;
@@ -100,6 +109,7 @@ check_tool npm     "gitnexus build"
 check_tool python3 "flow-metrics"
 check_tool gh      "flow-metrics"
 check_tool curl    "roborev installer"
+check_tool uv      "spec-driven development — specify CLI (opt-in: /destrier-spec-init)"
 have gitnexus && printf '  %-9s already on PATH\n' gitnexus || printf '  %-9s will build from source\n' gitnexus
 have roborev  && printf '  %-9s already on PATH\n' roborev  || printf '  %-9s will install via official installer\n' roborev
 
