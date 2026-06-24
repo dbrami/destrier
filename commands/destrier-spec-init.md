@@ -22,16 +22,22 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/spec-init.sh" --check
 
 After it succeeds:
 
-1. **Establish principles.** Run `/speckit-constitution` and feed it destrier's
+1. **Brainstorm, then author.** The `spec-driven-brainstorming` skill makes
+   collaborative brainstorming the front-end for the two authoring commands —
+   brainstorm the intent, distill to a brief, then hand it to
+   `/speckit-constitution` or `/speckit-specify`.
+2. **Establish principles.** Run `/speckit-constitution` and feed it destrier's
    house rules from `${CLAUDE_PLUGIN_ROOT}/templates/destrier-constitution-values.md`
    (this fills `.specify/memory/constitution.md` via spec-kit's own command — do
    not paste the file in as a replacement).
-2. **Drive the loop:** `/speckit-specify` → `/speckit-clarify` → `/speckit-plan`
+3. **Drive the loop:** `/speckit-specify` → `/speckit-clarify` → `/speckit-plan`
    → `/speckit-tasks` → `/speckit-implement`. spec-kit installs these as Claude
    **skills** (invoke as `/speckit-…`).
-3. **Bridges (optional, prompted):** after `/speckit-plan`, destrier offers to
-   record the plan's decisions in the OKF knowledgebase (a link-only pointer, not
-   a copy); after `/speckit-taskstoissues`, it offers to run flow-metrics.
+4. **Bridges (optional, prompted):** after `/speckit-specify`, destrier offers to
+   create one structured GitHub feature issue from the spec (links it; per-repo
+   `.destrier/issue.config` tunes labels/project/body); after `/speckit-plan`, to
+   record the plan's decisions in the OKF knowledgebase (a link-only pointer);
+   after `/speckit-taskstoissues`, to run flow-metrics.
 
 > Privacy: **set `DESTRIER_PRIVATE_DENYLIST` before authoring specs.** Spec
 > free-text is committed and scanned by the security gate; private codenames must

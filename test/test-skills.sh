@@ -21,4 +21,12 @@ if [ -f "$H" ]; then
   grep -q '^name: session-handover' "$H"; assert_exit_code 0 $? "session-handover name set"
 fi
 
+# --- spec-driven-brainstorming ---
+B="$ROOT/skills/spec-driven-brainstorming/SKILL.md"
+[ -f "$B" ]; assert_exit_code 0 $? "spec-driven-brainstorming SKILL.md exists"
+head -1 "$B" | grep -q '^---$'; assert_exit_code 0 $? "SDB has YAML frontmatter"
+grep -q '^name: spec-driven-brainstorming' "$B"; assert_exit_code 0 $? "SDB name set"
+grep -q 'speckit-constitution' "$B" && grep -q 'speckit-specify' "$B"
+assert_exit_code 0 $? "SDB references the speckit authoring commands"
+
 pass "skills"

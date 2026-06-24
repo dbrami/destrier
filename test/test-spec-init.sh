@@ -41,15 +41,16 @@ assert_contains "$rangeval" '>=' "speckit_version has a lower bound"
 assert_contains "$rangeval" '<'  "speckit_version has an upper bound"
 if printf '%s' "$rangeval" | grep -qF '=='; then fail "speckit_version must not pin with =="; else echo "  ok: speckit_version is a range, not =="; fi
 
-# Both bridge commands are provided AND their referencing hooks exist
-for c in speckit.destrier-sdd.kb-stub speckit.destrier-sdd.metrics; do
+# All three bridge commands are provided AND their referencing hooks exist
+for c in speckit.destrier-sdd.spec-issue speckit.destrier-sdd.kb-stub speckit.destrier-sdd.metrics; do
   assert_contains "$man" "$c" "provides command $c"
 done
+assert_contains "$man" "after_specify:"       "registers after_specify hook"
 assert_contains "$man" "after_plan:"          "registers after_plan hook"
 assert_contains "$man" "after_taskstoissues:" "registers after_taskstoissues hook"
 
 # Every command file named by provides[].file exists on disk
-for f in commands/speckit.destrier-sdd.kb-stub.md commands/speckit.destrier-sdd.metrics.md; do
+for f in commands/speckit.destrier-sdd.spec-issue.md commands/speckit.destrier-sdd.kb-stub.md commands/speckit.destrier-sdd.metrics.md; do
   if [ -f "$ROOT/spec-kit-ext/$f" ]; then echo "  ok: $f exists"; else fail "missing command file $f"; fi
 done
 
