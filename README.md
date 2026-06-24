@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="images/destrier_logo.png" alt="destrier logo" width="220"/>
+</div>
+
 # destrier
 
 > The warhorse that carries your code into battle — armored review, debugging, and a durable knowledgebase that does the heavy lifting.
