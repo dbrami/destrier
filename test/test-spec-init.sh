@@ -140,6 +140,23 @@ STUB
   assert_exit_code 1 "$r9" "unremovable legacy pointer exits non-zero"
   assert_contains "$o9" "could not remove the legacy pointer" "legacy-pointer removal failure is reported"
 
+  # Dangling-symlink variant: `[ -e ]` alone is false for a dangling symlink, so
+  # a retained one would be missed without the `-L` check. Make the parent dir
+  # read-only so `rm -f` fails. (Skipped as root, where perms don't block rm.)
+  if [ "$(id -u)" != 0 ]; then
+    workl="$(mktemp -d)"
+    ( cd "$workl" && git init -q && mkdir -p .specify/extensions/destrier-sdd \
+        && ln -s /nonexistent/leak/path .specify/extensions/destrier-sdd/.destrier-root \
+        && chmod 500 .specify/extensions/destrier-sdd )
+    o11="$( ( cd "$workl" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r11=$?
+    chmod 700 "$workl/.specify/extensions/destrier-sdd" 2>/dev/null
+    rm -rf "$workl"
+    assert_exit_code 1 "$r11" "retained dangling-symlink pointer exits non-zero"
+    assert_contains "$o11" "could not remove the legacy pointer" "dangling-symlink pointer is detected (-L)"
+  else
+    echo "  skip: dangling-symlink test (running as root)"
+  fi
+
   # An incompatible specify version must fail BEFORE any repo mutation.
   cat > "$bin/specify" <<'STUB'
 #!/usr/bin/env bash

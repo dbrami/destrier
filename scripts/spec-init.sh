@@ -203,7 +203,9 @@ if [ "$EXT_OK" = 1 ] && [ -d "$DEST_EXT" ]; then
     # wrote the absolute path here, where it could be committed/leak. Remove it now
     # that the leak-safe git-dir pointer is in place, and verify it is gone.
     rm -f "$DEST_EXT/.destrier-root" 2>/dev/null
-    if [ -e "$DEST_EXT/.destrier-root" ]; then
+    # -e follows symlinks (and is false for a dangling one), so also test -L to
+    # detect a retained dangling symlink that could still leak its target path.
+    if [ -e "$DEST_EXT/.destrier-root" ] || [ -L "$DEST_EXT/.destrier-root" ]; then
       echo "spec-init: could not remove the legacy pointer $DEST_EXT/.destrier-root (absolute path may leak)." >&2
       EXT_OK=0
     fi
