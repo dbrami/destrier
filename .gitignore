@@ -6,6 +6,14 @@ docs/plans/
 .destrier/
 # Dependencies / vendored external tools (installed by /destrier-setup)
 node_modules/
+# spec-kit Spec-Driven Development scaffolding — regenerable via /destrier-spec-init.
+# Track ONLY destrier's authored artifacts: the constitution and specs/.
+/.specify/*
+!/.specify/memory/
+/.specify/memory/*
+!/.specify/memory/constitution.md
+/.claude/skills/speckit-*/
+/CLAUDE.md
 # OS / language noise
 *.log
 .DS_Store

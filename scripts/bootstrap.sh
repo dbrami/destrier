@@ -61,6 +61,11 @@ pkg_name() {
 
 # Human-readable install command (for display).
 install_cmd() {
+  # uv has no apt/dnf/yum package; outside Homebrew, point at the official
+  # installer (the canonical, cross-distro path) instead of a bogus pkg command.
+  if [ "$1" = uv ] && [ "$PKG" != brew ]; then
+    echo "curl -LsSf https://astral.sh/uv/install.sh | sh"; return
+  fi
   case "$PKG" in
     brew) echo "brew install $1";;
     apt)  echo "sudo apt-get install -y $1";;
@@ -91,6 +96,22 @@ check_tool() { # tool purpose
   fi
 }
 
+# Optional prerequisite: reported but deliberately NOT added to MISSING, so
+# `--install-deps` never installs it. Used for opt-in features (e.g. SDD), which
+# install their own deps from their own command (/destrier-spec-init).
+check_optional() { # tool purpose
+  if have "$1"; then
+    printf '  %-9s ok\n' "$1"
+  else
+    cmd="$(install_cmd "$(pkg_name "$1")")"
+    if [ -n "$cmd" ]; then
+      printf '  %-9s optional, MISSING — %s (install: %s)\n' "$1" "$2" "$cmd"
+    else
+      printf '  %-9s optional, MISSING — %s\n' "$1" "$2"
+    fi
+  fi
+}
+
 echo "destrier prerequisite check"
 check_tool git     "core: clone + git hooks"
 check_tool rg      "core: security-scan / de-identification gate"
@@ -100,6 +121,7 @@ check_tool npm     "gitnexus build"
 check_tool python3 "flow-metrics"
 check_tool gh      "flow-metrics"
 check_tool curl    "roborev installer"
+check_optional uv  "spec-driven development — specify CLI (opt-in: /destrier-spec-init)"
 have gitnexus && printf '  %-9s already on PATH\n' gitnexus || printf '  %-9s will build from source\n' gitnexus
 have roborev  && printf '  %-9s already on PATH\n' roborev  || printf '  %-9s will install via official installer\n' roborev
 

@@ -1,0 +1,43 @@
+schema_version: "1.0"
+
+extension:
+  id: destrier-sdd
+  name: "destrier SDD bridges"
+  version: "0.1.0"
+  description: "Bridges spec-kit's Spec-Driven Development loop into destrier: promotes plan decisions into the OKF knowledgebase and nudges the tasks -> issues -> flow-metrics chain."
+  author: Daniel Brami
+  repository: https://github.com/dbrami/destrier
+  license: MIT
+
+requires:
+  # Range, never ==. destrier pins the specify CLI to a tested tag (see
+  # scripts/spec-init.sh) and upgrades only via `specify self upgrade --tag`.
+  # Bump this range in lockstep with the pin when moving to a new minor.
+  speckit_version: ">=0.11,<0.12"
+
+provides:
+  commands:
+    - name: speckit.destrier-sdd.kb-stub
+      file: commands/speckit.destrier-sdd.kb-stub.md
+      description: "Promote the just-written plan/spec into a link-only OKF knowledgebase concept (no content is copied)"
+    - name: speckit.destrier-sdd.metrics
+      file: commands/speckit.destrier-sdd.metrics.md
+      description: "After tasks become GitHub issues, run destrier flow-metrics over the board"
+
+hooks:
+  # Both optional -> the agent PROMPTS rather than auto-running. spec-kit's
+  # security/commit gates stay mandatory; these SDD<->destrier bridges are opt-in.
+  after_plan:
+    command: speckit.destrier-sdd.kb-stub
+    optional: true
+    description: "Offer to record the plan's durable decisions in the destrier OKF knowledgebase"
+  after_taskstoissues:
+    command: speckit.destrier-sdd.metrics
+    optional: true
+    description: "Offer to run flow-metrics now that tasks have become GitHub issues"
+
+tags:
+  - "destrier"
+  - "knowledgebase"
+  - "metrics"
+  - "bridge"
