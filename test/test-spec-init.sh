@@ -146,6 +146,42 @@ STUB
   rm -rf "$work2"
   assert_exit_code 1 "$r3" "extension install failure exits non-zero"
   assert_contains "$o3" "bridge extension is NOT" "partial install is reported honestly"
+
+  # An unparseable `specify --version` must fail closed (not silently skip compat).
+  cat > "$bin/specify" <<'STUB'
+#!/usr/bin/env bash
+case "$1" in
+  --version) echo "specify (unknown build)" ;;
+  init)      mkdir -p .specify/memory ;;
+  extension) mkdir -p .specify/extensions/destrier-sdd ;;
+esac
+exit 0
+STUB
+  chmod +x "$bin/specify"
+  worku="$(mktemp -d)"; ( cd "$worku" && git init -q )
+  o5="$( ( cd "$worku" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r5=$?
+  assert_exit_code 1 "$r5" "unparseable version fails closed"
+  assert_contains "$o5" "could not determine the installed specify version" "unparseable version is reported"
+  if [ -e "$worku/.specify" ]; then fail "repo was mutated despite an unparseable version"; else echo "  ok: no repo mutation on unparseable version"; fi
+  rm -rf "$worku"
+
+  # A failed root-pointer write must be surfaced (not a false "ready"). Make the
+  # target a directory so the redirect fails.
+  cat > "$bin/specify" <<'STUB'
+#!/usr/bin/env bash
+case "$1" in
+  --version) echo "specify 0.11.6" ;;
+  init)      mkdir -p .specify/memory ;;
+  extension) mkdir -p .specify/extensions/destrier-sdd ;;
+esac
+exit 0
+STUB
+  chmod +x "$bin/specify"
+  workw="$(mktemp -d)"; ( cd "$workw" && git init -q && mkdir -p .git/destrier-root )
+  o6="$( ( cd "$workw" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r6=$?
+  rm -rf "$workw"
+  assert_exit_code 1 "$r6" "failed root-pointer write exits non-zero"
+  assert_contains "$o6" "failed to record the destrier root" "root-write failure is reported"
 else
   echo "  skip: idempotency (needs python3>=3.11 + git)"
 fi

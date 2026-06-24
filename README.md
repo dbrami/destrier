@@ -92,9 +92,12 @@ Establish principles with `/speckit.constitution`, fed destrier's house rules fr
 replacement for `.specify/memory/constitution.md`).
 
 - **Requirements:** `uv` and `python3 >= 3.11` (verified by `/destrier-spec-init`).
-- **Pinning:** the `specify` CLI is pinned to a tested tag (`v0.11.6`). Upgrade
-  only via `specify self upgrade --tag <tag>`, and bump
-  `spec-kit-ext/extension.yml`'s `requires` range in lockstep.
+- **Versioning:** `/destrier-spec-init` installs `specify` `v0.11.6` on a fresh
+  setup. Compatibility is governed by the bridge extension's `requires` range
+  (`>=0.11,<0.12`), so a pre-existing `0.11.x` is accepted and anything outside
+  the range is rejected with upgrade instructions. Upgrade within the range via
+  `specify self upgrade --tag <tag>`, and bump the range in lockstep when moving
+  to a new spec-kit minor.
 - **Privacy:** **set `DESTRIER_PRIVATE_DENYLIST` before authoring specs.** Spec
   free-text is committed and scanned by the security gate; private codenames must
   not leak — especially into a public repo.

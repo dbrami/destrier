@@ -134,11 +134,20 @@ fi
 
 # Enforce version compatibility BEFORE any repo mutation: an unsupported version
 # would otherwise init the repo and only fail later at `extension add`, leaving a
-# partial setup. Proceed only when the installed minor matches the pinned one.
+# partial setup. The compatibility CONTRACT is the bridge extension's `requires`
+# range (>=0.11,<0.12 == the $PIN_MM minor); $SPECKIT_TAG (v0.11.6) is only the
+# version destrier installs fresh. So any $PIN_MM.x is accepted (matching the
+# extension), and we fail CLOSED if no version can be parsed.
 SP_VER="$(specify --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
 SP_MM="$(printf '%s' "$SP_VER" | cut -d. -f1-2)"
-if [ -n "$SP_MM" ] && [ "$SP_MM" != "$PIN_MM" ]; then
-  echo "spec-init: specify ${SP_VER} is outside destrier's supported range (~${PIN_MM}.x; pinned $SPECKIT_TAG)." >&2
+if [ -z "$SP_MM" ]; then
+  echo "spec-init: could not determine the installed specify version." >&2
+  echo "  Reinstall the pinned CLI, then re-run /destrier-spec-init:" >&2
+  echo "    uv tool install specify-cli --force --from $SPECKIT_REF" >&2
+  exit 1
+fi
+if [ "$SP_MM" != "$PIN_MM" ]; then
+  echo "spec-init: specify ${SP_VER} is outside destrier's supported range (${PIN_MM}.x; pinned $SPECKIT_TAG)." >&2
   echo "  Upgrade to the pinned version, then re-run /destrier-spec-init:" >&2
   echo "    specify self upgrade --tag $SPECKIT_TAG" >&2
   exit 1
@@ -168,7 +177,10 @@ fi
 # absolute (home) path can never be committed or leak — see the de-identification
 # gate. The bridge commands read it back via `git rev-parse --git-dir`.
 if [ "$EXT_OK" = 1 ] && [ -d "$DEST_EXT" ]; then
-  printf '%s\n' "$PLUGIN_ROOT" > "$GIT_DIR/destrier-root"
+  if ! printf '%s\n' "$PLUGIN_ROOT" > "$GIT_DIR/destrier-root" 2>/dev/null; then
+    echo "spec-init: failed to record the destrier root at $GIT_DIR/destrier-root" >&2
+    EXT_OK=0
+  fi
 else
   EXT_OK=0
 fi
