@@ -30,6 +30,7 @@ destrier is its own Claude Code marketplace, so install is one command each:
 |-----------|------|---------|
 | `evidence-driven-debugging` | skill | Evidence-over-deduction habits for any debugging task. |
 | `session-handover` | skill | Maintain a durable, model-labeled knowledgebase across sessions as a strict [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) (OKF) v0.1 bundle — a dated session journal plus a cross-linked concept layer. |
+| `spec-driven-brainstorming` | skill | Make collaborative brainstorming the front-end for `/speckit-constitution` and `/speckit-specify`: brainstorm, distill, hand off, continue the speckit loop. |
 | `daily-recap` | SessionStart hook | Recap of last-24h commits, uncommitted changes, and unpushed counts. |
 | `commit-hygiene` | Stop hook | Warns about un-updated CLAUDE.md/README, missing version bump, and unpushed commits. |
 | `critical-path-precommit` | script | Reminds you to run gitnexus impact analysis when staged files match configured critical paths. |
@@ -80,13 +81,22 @@ integration is two layers: the plugin ships the bridge extension
 (`spec-kit-ext/`), and per repo `specify extension add … --dev` installs it into
 `.specify/`.
 
-Two optional (prompted, never auto-run) bridges:
+Three optional (prompted, never auto-run) bridges:
 
+- after `/speckit-specify` — create one structured GitHub feature issue from the
+  spec (the "issue-first" practice). By default it **links and summarizes** the
+  spec (`spec.md` stays canonical); a per-repo `.destrier/issue.config` can set
+  labels, project, body mode (`summary`/`full`), title prefix, assignee, or
+  milestone. The de-identification gate runs on the body before publishing, and
+  it is idempotent. Project-specific config stays in the project, never in destrier;
 - after `/speckit-plan` — record the plan's durable decisions as a **link-only**
   OKF knowledgebase concept (a pointer to `plan.md`, never a copy);
 - after `/speckit-taskstoissues` — run `flow-metrics` over the GitHub issues the
   tasks became (`tasks → issues → metrics`).
 
+The **`spec-driven-brainstorming`** skill makes collaborative brainstorming the
+front-end for authoring: brainstorm the intent, distill to a brief, then hand it
+to `/speckit-constitution` or `/speckit-specify` and continue the speckit loop.
 Establish principles with `/speckit-constitution`, fed destrier's house rules from
 `templates/destrier-constitution-values.md` (it is *input* to the command, not a
 replacement for `.specify/memory/constitution.md`).

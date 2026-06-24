@@ -1,7 +1,7 @@
 {
   "name": "destrier",
-  "version": "0.5.0",
-  "description": "Generic code-improvement toolkit: review/debug skills, knowledgebase session workflow, git hooks, spec-driven development (spec-kit), and a bootstrap for gitnexus + roborev.",
+  "version": "0.6.0",
+  "description": "Generic code-improvement toolkit: review/debug skills, knowledgebase session workflow, git hooks, spec-driven development (spec-kit) with brainstorming + feature-to-issue bridges, and a bootstrap for gitnexus + roborev.",
   "author": { "name": "Daniel Brami" },
   "license": "MIT",
   "homepage": "https://github.com/dbrami/destrier"

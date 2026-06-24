@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-06-24
+
+### Added
+- **`spec-driven-brainstorming` skill** — makes the superpowers `brainstorming`
+  skill the front-end for authoring under Spec-Driven Development: brainstorm the
+  intent, distill to a short input brief, hand it to `/speckit-constitution` or
+  `/speckit-specify`, and continue the speckit loop — deliberately *replacing*
+  brainstorming's "design doc → writing-plans" tail when working under spec-kit
+  (spec-kit owns the canonical artifacts).
+- **Optional feature → GitHub issue bridge** — a 3rd `after_specify` hook in the
+  `destrier-sdd` spec-kit extension (now v0.2.0) plus `scripts/spec-to-issue.sh`:
+  turn a `spec.md` into one structured GitHub feature issue (the "issue-first"
+  practice). Default **links and summarizes** the spec (`spec.md` stays
+  canonical); per-repo, gitignored `.destrier/issue.config` tunes labels, project,
+  body mode (`summary`/`full`), title prefix, assignee, milestone. The
+  de-identification gate runs on the body before publishing (aborts on any leak),
+  it is idempotent (reuses an issue already referencing the spec), `--dry-run`
+  previews with no `gh` calls, and it emits no emojis.
+  - Project-specific issue conventions stay in the project's own config, never in
+    destrier; no board automation or domain governance is shipped (generic by design).
+- `test/test-spec-to-issue.sh` — hermetic (`gh` stubbed): summary extraction,
+  config parsing, privacy-gate abort, idempotency, create-path, and no-emoji.
+
 ## [0.5.0] - 2026-06-24
 
 ### Added
