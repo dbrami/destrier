@@ -98,46 +98,60 @@ fi
   echo "spec-init: bridge extension not found at $EXT_DIR" >&2; exit 1; }
 
 # --- 1. pinned specify CLI (no vendoring) ---
+PIN_MM="$(printf '%s' "$SPECKIT_TAG" | sed 's/^v//' | cut -d. -f1-2)"   # e.g. 0.11
 if have specify; then
-  echo "specify already installed; leaving it as-is (upgrade with: specify self upgrade --tag $SPECKIT_TAG)."
+  echo "specify already installed."
 else
   echo "Installing specify CLI ($SPECKIT_TAG) via uv ..."
   uv tool install specify-cli --from "$SPECKIT_REF" || {
     echo "spec-init: failed to install specify-cli" >&2; exit 1; }
 fi
 
-# --- 2. idempotent project init ---
-if [ -d ".specify" ]; then
-  echo ".specify/ already present; skipping 'specify init' (constitution & specs preserved)."
-else
-  echo "Initializing Spec-Driven Development in $(pwd) ..."
-  # --force skips the non-empty-dir confirmation (which would hang a
-  # non-interactive run). init writes only spec-kit's own files and preserves an
-  # existing constitution; it never touches specs/.
-  specify init . --integration claude --force || {
-    echo "spec-init: 'specify init' failed" >&2; exit 1; }
+# Verify the installed version is within destrier's tested minor. Warn (non-fatal)
+# with explicit upgrade instructions if not — the bridge extension's `requires`
+# range still enforces hard at `extension add`.
+SP_VER="$(specify --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+SP_MM="$(printf '%s' "$SP_VER" | cut -d. -f1-2)"
+if [ -n "$SP_MM" ] && [ "$SP_MM" != "$PIN_MM" ]; then
+  echo "WARNING: specify ${SP_VER:-unknown} is outside destrier's tested range (pinned $SPECKIT_TAG)." >&2
+  echo "         If the steps below fail on compatibility, run: specify self upgrade --tag $SPECKIT_TAG" >&2
 fi
+
+# --- 2. project init (idempotent; self-heals a partial/interrupted init) ---
+echo "Initializing Spec-Driven Development in $(pwd) ..."
+# --force skips the non-empty-dir confirmation (which would hang a non-interactive
+# run) and re-scaffolds any missing pieces. spec-kit preserves an existing
+# constitution and never touches specs/, so this is safe to run on every invocation.
+specify init . --integration claude --force || {
+  echo "spec-init: 'specify init' failed" >&2; exit 1; }
 
 # --- 3. register destrier's bridge extension (idempotent) ---
 DEST_EXT=".specify/extensions/$EXT_ID"
+EXT_OK=1
 if [ -d "$DEST_EXT" ]; then
   echo "Re-registering destrier-sdd extension (--force) ..."
-  specify extension add "$EXT_DIR" --dev --force || echo "  (extension update failed; continuing)"
+  specify extension add "$EXT_DIR" --dev --force || EXT_OK=0
 else
   echo "Installing destrier-sdd extension ..."
-  specify extension add "$EXT_DIR" --dev || echo "  (extension install failed; continuing)"
+  specify extension add "$EXT_DIR" --dev || EXT_OK=0
 fi
 
 # --- 4. record the destrier plugin root for the bridge commands ---
-if [ -d "$DEST_EXT" ]; then
+if [ "$EXT_OK" = 1 ] && [ -d "$DEST_EXT" ]; then
   printf '%s\n' "$PLUGIN_ROOT" > "$DEST_EXT/.destrier-root"
 else
-  echo "spec-init: extension not installed; bridges (kb-stub/metrics) will be inert." >&2
+  EXT_OK=0
 fi
 
-# --- 5. next steps ---
+# --- 5. report (honest about partial installs) + next steps ---
 echo ""
-echo "Spec-Driven Development is ready in this repo."
+if [ "$EXT_OK" = 1 ]; then
+  echo "Spec-Driven Development is ready in this repo."
+else
+  echo "WARNING: spec-kit is initialized, but the destrier bridge extension is NOT" >&2
+  echo "installed — the kb-stub/metrics bridges will be inert. Re-run /destrier-spec-init" >&2
+  echo "after resolving the error above." >&2
+fi
 echo "Next:"
 echo "  1. Establish principles — run /speckit.constitution and feed it destrier's"
 echo "     house rules from:"
@@ -146,3 +160,6 @@ echo "  2. /speckit.specify -> /speckit.clarify -> /speckit.plan -> /speckit.tas
 echo ""
 echo "Privacy: set DESTRIER_PRIVATE_DENYLIST before authoring specs — spec free-text"
 echo "is committed and scanned; private codenames must not leak into a public repo."
+
+# Surface a partial install to the caller (/destrier-spec-init) as a failure.
+[ "$EXT_OK" = 1 ] || exit 1

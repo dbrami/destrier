@@ -21,6 +21,12 @@ assert_contains "$out2" "MISSING" "missing tool reported as MISSING"
 assert_contains "$out2" "jq ->" "missing tool shows an install command"
 assert_contains "$out2" "install-deps" "offers --install-deps for missing prerequisites"
 
+# uv is an OPTIONAL (opt-in SDD) prerequisite: reported when missing, but never
+# funneled into the auto-install (--install-deps) path.
+out_uv="$(DESTRIER_FAKE_MISSING=uv bash "$BS" --check 2>&1)"
+assert_contains "$out_uv" "optional" "uv reported as optional when missing"
+if printf '%s' "$out_uv" | grep -qF 'uv ->'; then fail "uv must not enter the --install-deps path"; else echo "  ok: uv excluded from --install-deps path"; fi
+
 # launcher with no install present -> exit 1 with guidance, no crash
 empty="$(mktemp -d)"; trap 'rm -rf "$empty"' EXIT
 out3="$(DESTRIER_HOME="$empty" bash "$ROOT/scripts/gitnexus-mcp-launch.sh" 2>&1)"; rc3=$?

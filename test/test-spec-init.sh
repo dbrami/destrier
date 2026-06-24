@@ -97,15 +97,31 @@ STUB
 
   o1="$(run_init 2>&1)"; r1=$?
   assert_exit_code 0 "$r1" "first run succeeds"
+  assert_contains "$o1" "ready in this repo" "first run reports SDD ready (extension installed)"
   if [ -f "$work/.specify/extensions/destrier-sdd/.destrier-root" ]; then echo "  ok: .destrier-root recorded"; else fail ".destrier-root not written"; fi
   assert_eq "$ROOT" "$(cat "$work/.specify/extensions/destrier-sdd/.destrier-root" 2>/dev/null)" ".destrier-root points at plugin root"
 
-  # Seed a constitution, then re-run: init must be skipped and the file preserved.
+  # Seed a constitution, then re-run: init is idempotent and the file is preserved.
   printf 'SENTINEL-CONSTITUTION\n' > "$work/.specify/memory/constitution.md"
   o2="$(run_init 2>&1)"; r2=$?
   assert_exit_code 0 "$r2" "second run succeeds (idempotent)"
-  assert_contains "$o2" "skipping 'specify init'" "re-run skips init when .specify exists"
   assert_eq "SENTINEL-CONSTITUTION" "$(cat "$work/.specify/memory/constitution.md")" "existing constitution preserved on re-run"
+
+  # A failing extension install must surface as a non-zero exit (not a false "ready").
+  cat > "$bin/specify" <<'STUB'
+#!/usr/bin/env bash
+case "$1" in
+  init)      mkdir -p .specify/memory ;;
+  extension) exit 3 ;;   # simulate extension registration failure
+esac
+exit 0
+STUB
+  chmod +x "$bin/specify"
+  work2="$(mktemp -d)"
+  o3="$( ( cd "$work2" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r3=$?
+  rm -rf "$work2"
+  assert_exit_code 1 "$r3" "extension install failure exits non-zero"
+  assert_contains "$o3" "bridge extension is NOT" "partial install is reported honestly"
 else
   echo "  skip: idempotency (needs python3>=3.11 + git)"
 fi
