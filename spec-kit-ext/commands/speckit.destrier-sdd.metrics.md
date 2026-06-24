@@ -4,7 +4,7 @@ description: "Run destrier flow-metrics now that tasks have become GitHub issues
 
 # Flow-metrics after tasks -> issues
 
-`/speckit.taskstoissues` just converted `tasks.md` into GitHub issues. destrier's
+`/speckit-taskstoissues` just converted `tasks.md` into GitHub issues. destrier's
 `flow-metrics` reports throughput and cycle-time over GitHub **issues** (it has no
 `tasks.md` code path), so this is the moment the data exists to measure.
 

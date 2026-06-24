@@ -1,10 +1,10 @@
 # destrier constitution — starter values
 
-**How to use this file:** this is *input* for spec-kit's `/speckit.constitution`
+**How to use this file:** this is *input* for spec-kit's `/speckit-constitution`
 command, **not** a replacement for `.specify/memory/constitution.md`. Paste the
-principles below (edit as needed) into `/speckit.constitution` so spec-kit fills,
+principles below (edit as needed) into `/speckit-constitution` so spec-kit fills,
 versions, and propagates the constitution through its own lifecycle. Do not copy
-this file over the generated constitution — `/speckit.constitution` owns that file.
+this file over the generated constitution — `/speckit-constitution` owns that file.
 
 Suggested prompt:
 
@@ -52,5 +52,5 @@ Suggested prompt:
 
 - The constitution supersedes ad-hoc preference; deviations must be justified in
   the plan's Constitution Check and recorded.
-- Amend via `/speckit.constitution`; bump the constitution version per SemVer and
+- Amend via `/speckit-constitution`; bump the constitution version per SemVer and
   let spec-kit propagate changes to the plan/spec/tasks templates.

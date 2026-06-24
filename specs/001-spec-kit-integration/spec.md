@@ -110,7 +110,7 @@ gitignored, and that the security scan passes over the tracked artifacts.
 - **Bridge extension (`destrier-sdd`)**: a spec-kit extension providing two
   bridge commands and registering two lifecycle hooks.
 - **Constitution**: the project's governing principles, owned by
-  `/speckit.constitution`, seeded from destrier's starter values.
+  `/speckit-constitution`, seeded from destrier's starter values.
 - **Concept stub**: an OKF knowledgebase node that links to a plan/spec.
 
 ## Success Criteria *(mandatory)*

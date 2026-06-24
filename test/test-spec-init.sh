@@ -88,12 +88,16 @@ assert_contains "$out" "3.11" "python floor (3.11) surfaced when too old"
 if python3 -c 'import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)' 2>/dev/null && command -v git >/dev/null 2>&1; then
   bin="$(mktemp -d)"; work="$(mktemp -d)"
   ( cd "$work" && git init -q )
-  # Stub reports an in-range version so the pre-init compat gate passes.
+  # Stub reports an in-range version so the pre-init compat gate passes, and models
+  # spec-kit's `init --force` behavior: it writes a template constitution ONLY when
+  # one does not already exist (preserve-if-present). This makes the idempotency
+  # assertion real — if spec-init removed the constitution before init, the stub
+  # would overwrite SENTINEL with the template and the test would catch it.
   cat > "$bin/specify" <<'STUB'
 #!/usr/bin/env bash
 case "$1" in
   --version) echo "specify 0.11.6" ;;
-  init)      mkdir -p .specify/memory ;;
+  init)      mkdir -p .specify/memory; [ -f .specify/memory/constitution.md ] || printf 'TEMPLATE-CONSTITUTION\n' > .specify/memory/constitution.md ;;
   extension) mkdir -p .specify/extensions/destrier-sdd ;;
 esac
 exit 0
@@ -187,6 +191,13 @@ STUB
   rm -rf "$work2"
   assert_exit_code 1 "$r3" "extension install failure exits non-zero"
   assert_contains "$o3" "bridge extension is NOT" "partial install is reported honestly"
+
+  # A bare repository (no work tree) must be rejected before any init/scaffolding.
+  workb="$(mktemp -d)"; ( cd "$workb" && git init -q --bare )
+  o10="$( ( cd "$workb" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r10=$?
+  rm -rf "$workb"
+  assert_exit_code 1 "$r10" "bare repo (non-work-tree) is rejected"
+  assert_contains "$o10" "git work tree" "non-work-tree failure is reported"
 
   # An unparseable `specify --version` must fail closed (not silently skip compat).
   cat > "$bin/specify" <<'STUB'

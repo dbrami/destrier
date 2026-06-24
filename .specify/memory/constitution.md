@@ -62,7 +62,7 @@ gates that run before merge.
 ## Governance
 
 This constitution supersedes ad-hoc preference. Deviations must be justified in
-the plan's Constitution Check and recorded. Amend via `/speckit.constitution`;
+the plan's Constitution Check and recorded. Amend via `/speckit-constitution`;
 bump the constitution version per SemVer and let spec-kit propagate changes to
 the plan/spec/tasks templates. All reviews verify compliance; complexity must be
 justified.

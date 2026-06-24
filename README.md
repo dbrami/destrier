@@ -82,12 +82,12 @@ integration is two layers: the plugin ships the bridge extension
 
 Two optional (prompted, never auto-run) bridges:
 
-- after `/speckit.plan` — record the plan's durable decisions as a **link-only**
+- after `/speckit-plan` — record the plan's durable decisions as a **link-only**
   OKF knowledgebase concept (a pointer to `plan.md`, never a copy);
-- after `/speckit.taskstoissues` — run `flow-metrics` over the GitHub issues the
+- after `/speckit-taskstoissues` — run `flow-metrics` over the GitHub issues the
   tasks became (`tasks → issues → metrics`).
 
-Establish principles with `/speckit.constitution`, fed destrier's house rules from
+Establish principles with `/speckit-constitution`, fed destrier's house rules from
 `templates/destrier-constitution-values.md` (it is *input* to the command, not a
 replacement for `.specify/memory/constitution.md`).
 

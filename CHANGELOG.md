@@ -22,7 +22,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
     `plan.md`, never a copy); `after_taskstoissues` runs `flow-metrics` over the
     GitHub issues the tasks became (`tasks → issues → metrics`).
   - `templates/destrier-constitution-values.md` — destrier's house rules as
-    *input* to `/speckit.constitution` (not a replacement constitution file).
+    *input* to `/speckit-constitution` (not a replacement constitution file).
   - `bootstrap.sh` now reports `uv` status (with the official-installer hint
     outside Homebrew); `/destrier-setup` documents the SDD opt-in.
   - `test/test-spec-init.sh` — manifest invariants, pin↔range version guard,

@@ -108,13 +108,15 @@ fi
 [ -f "$EXT_DIR/extension.yml" ] || {
   echo "spec-init: bridge extension not found at $EXT_DIR" >&2; exit 1; }
 
-# SDD requires a git repository: spec-kit's feature/branch workflow needs it, and
-# the bridge commands locate destrier via a pointer stored inside the git dir.
-GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
-if [ -z "$GIT_DIR" ]; then
-  echo "spec-init: this is not a git repository. Run 'git init' first, then /destrier-spec-init." >&2
+# SDD requires a git WORK TREE (not a bare repo, and not invoked inside the .git
+# dir, where `specify init .` would scaffold into git's internal storage):
+# spec-kit's feature/branch workflow needs it, and the bridge commands locate
+# destrier via a pointer stored inside the git dir.
+if [ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != true ]; then
+  echo "spec-init: must be run inside a git work tree (run 'git init' first; not a bare repo or .git dir)." >&2
   exit 1
 fi
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
 
 # --- 1. pinned specify CLI (no vendoring) ---
 if have specify; then
@@ -220,10 +222,10 @@ else
   echo "after resolving the error above." >&2
 fi
 echo "Next:"
-echo "  1. Establish principles — run /speckit.constitution and feed it destrier's"
+echo "  1. Establish principles — run /speckit-constitution and feed it destrier's"
 echo "     house rules from:"
 echo "       $VALUES"
-echo "  2. /speckit.specify -> /speckit.clarify -> /speckit.plan -> /speckit.tasks -> /speckit.implement"
+echo "  2. /speckit-specify -> /speckit-clarify -> /speckit-plan -> /speckit-tasks -> /speckit-implement"
 echo ""
 echo "Privacy: set DESTRIER_PRIVATE_DENYLIST before authoring specs — spec free-text"
 echo "is committed and scanned; private codenames must not leak into a public repo."

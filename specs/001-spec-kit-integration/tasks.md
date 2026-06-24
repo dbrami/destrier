@@ -30,7 +30,7 @@ Tasks are grouped by user story. `[P]` marks tasks that can run in parallel
 - [x] T008 Create `commands/destrier-spec-init.md` (thin wrapper + next steps +
   privacy warning).
 - [x] T009 [P] Create `templates/destrier-constitution-values.md` (house rules as
-  input to `/speckit.constitution`).
+  input to `/speckit-constitution`).
 - [x] T010 [P] Update `commands/destrier-setup.md` to document the SDD opt-in.
 
 ## Phase 4: Tests & docs
