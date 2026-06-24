@@ -6,16 +6,27 @@
 
 > The warhorse that carries your code into battle — armored review, debugging, and a durable knowledgebase that does the heavy lifting.
 
-A generic **code-improvement toolkit for Claude Code**, packaged as a plugin.
-It bundles a few battle-tested skills, hooks, a knowledgebase session workflow,
-and code-graph/metrics helpers — and wires in two external tools,
-[gitnexus](https://github.com/abhigyanpatwari/GitNexus) (code knowledge graph +
-MCP) and [roborev](https://roborev.io) (multi-agent AI code review) — without
-vendoring them.
+A generic **code-improvement toolkit for Claude Code**, packaged as a plugin:
+battle-tested skills, git hooks, a durable knowledgebase, code-graph + flow
+metrics, and an opt-in Spec-Driven Development loop. Upstream tools are
+**bootstrapped from source, never vendored** — see [Built on](#built-on).
+
+## Contents
+
+- [Install](#install)
+- [What it bundles](#what-it-bundles)
+- [Commands](#commands)
+- [External tools](#external-tools-bootstrapped-not-vendored)
+- [Spec-Driven Development](#spec-driven-development-opt-in)
+- [Requirements](#requirements)
+- [Privacy](#privacy)
+- [Development](#development)
+- [Built on](#built-on)
+- [License](#license)
 
 ## Install
 
-destrier is its own Claude Code marketplace, so install is one command each:
+destrier is its own Claude Code marketplace — one command each:
 
 ```text
 /plugin marketplace add dbrami/destrier
@@ -23,119 +34,89 @@ destrier is its own Claude Code marketplace, so install is one command each:
 /destrier-setup
 ```
 
-- `/plugin install destrier` loads the skills, hooks, slash commands, and the
-  gitnexus MCP server registration.
-- `/destrier-setup` bootstraps the external tools (see below). Restart Claude
-  Code afterward so the gitnexus MCP server loads.
+`/plugin install` loads the skills, hooks, commands, and gitnexus MCP
+registration. `/destrier-setup` bootstraps the external tools; restart Claude Code
+afterward so the MCP server loads.
 
 ## What it bundles
 
 | Component | Type | Purpose |
 |-----------|------|---------|
 | `evidence-driven-debugging` | skill | Evidence-over-deduction habits for any debugging task. |
-| `session-handover` | skill | Maintain a durable, model-labeled knowledgebase across sessions as a strict [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) (OKF) v0.1 bundle — a dated session journal plus a cross-linked concept layer. |
-| `spec-driven-brainstorming` | skill | Make collaborative brainstorming the front-end for `/speckit-constitution` and `/speckit-specify`: brainstorm, distill, hand off, continue the speckit loop. |
-| `daily-recap` | SessionStart hook | Recap of last-24h commits, uncommitted changes, and unpushed counts. |
-| `commit-hygiene` | Stop hook | Warns about un-updated CLAUDE.md/README, missing version bump, and unpushed commits. |
-| `critical-path-precommit` | script | Reminds you to run gitnexus impact analysis when staged files match configured critical paths. |
+| `session-handover` | skill | A durable, model-labeled knowledgebase across sessions as a strict [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) (OKF) v0.1 bundle. |
+| `spec-driven-brainstorming` | skill | Make brainstorming the front-end for `/speckit-constitution` and `/speckit-specify`. |
+| `daily-recap` | SessionStart hook | Recap of last-24h commits, uncommitted changes, unpushed counts. |
+| `commit-hygiene` | Stop hook | Warns about stale CLAUDE.md/README, missing version bump, unpushed commits. |
+| `critical-path-precommit` | script | Prompts gitnexus impact analysis when staged files match critical paths. |
 | `flow-metrics` | script | Weekly throughput + cycle-time (p50/p85) and WIP-aging via `gh`. |
 | `security-scan` | script | De-identification + secret scan, reused by the security-review gate. |
-| `spec-kit-ext` | spec-kit extension | Bridges spec-kit's Spec-Driven Development loop into the OKF knowledgebase + flow-metrics (opt-in via `/destrier-spec-init`). |
+| `spec-kit-ext` | spec-kit extension | Bridges the SDD loop into the OKF knowledgebase, GitHub issues, and flow-metrics (opt-in). |
 
 ## Commands
 
 | Command | What it does |
 |---------|--------------|
 | `/destrier-setup` | Build gitnexus from git and install roborev via its official installer. |
-| `/destrier-spec-init` | Opt-in: set up Spec-Driven Development (spec-kit) in the current repo — installs the pinned `specify` CLI, runs `specify init`, and registers destrier's bridge extension. |
-| `/destrier-kb-init` | Initialize today's KB session summary (OKF v0.1 bundle) and show recent ones. Promote durable knowledge into cross-linked concept files with `scripts/kb-concept.sh <type> "<title>"`. |
+| `/destrier-spec-init` | Opt-in: set up Spec-Driven Development (spec-kit) in the current repo. |
+| `/destrier-kb-init` | Initialize today's KB session summary (OKF v0.1) and show recent ones. |
 | `/destrier-precommit-install` | Install the critical-path guard as this repo's pre-commit hook. |
-| `/destrier-security-review` | De-identification + secret scan of pending changes, plus roborev security review when available. |
+| `/destrier-security-review` | De-identification + secret scan of pending changes (plus roborev when available). |
 | `/destrier-flow-metrics` | Throughput and cycle-time report for one or more repos. |
 
-## External tools (not vendored)
+## External tools (bootstrapped, not vendored)
 
-`/destrier-setup` installs both from upstream into `~/.destrier/vendor/`:
+`/destrier-setup` installs both into `~/.destrier/vendor/`:
 
-- **gitnexus** — cloned from
-  [`abhigyanpatwari/GitNexus`](https://github.com/abhigyanpatwari/GitNexus) and
-  built with `npm install && npm run build` (needs Node + git). Registered as an
-  MCP server via a launcher script. Fallback: `npm install -g gitnexus`.
-- **roborev** — installed via its official installer
-  (`curl -fsSL https://roborev.io/install.sh | bash`), which downloads a
-  prebuilt binary (no Go toolchain). The bootstrap then runs `roborev init` and
-  `roborev skills install` so roborev installs its own skills.
+- **[gitnexus](https://github.com/abhigyanpatwari/GitNexus)** — cloned and built
+  (`npm install && npm run build`; needs Node + git), registered as an MCP server.
+  Fallback: `npm install -g gitnexus`. Run `gitnexus analyze` once per repo.
+- **[roborev](https://roborev.io)** — official installer (`curl … | bash`, prebuilt
+  binary), then `roborev init` + `roborev skills install`.
 
-> Note: `/destrier-setup` runs the official roborev `curl | bash` installer. It is
-> user-invoked and pinned to the official URL; review it first if you prefer.
-
-After setup, run `gitnexus analyze` once per repository you want indexed.
+> The roborev installer is `curl | bash` — user-invoked and pinned to the official
+> URL. Review it first if you prefer.
 
 ## Spec-Driven Development (opt-in)
 
-destrier can bring GitHub [spec-kit](https://github.com/github/spec-kit)'s
-Spec-Driven Development (SDD) loop — `constitution → specify → plan → tasks →
-implement` — into a repo. It is **opt-in and per-repo**: run `/destrier-spec-init`
-in the repository you want to use it in.
+Bring GitHub [spec-kit](https://github.com/github/spec-kit)'s SDD loop —
+`constitution → specify → plan → tasks → implement` — into a repo with
+`/destrier-spec-init` (opt-in, per-repo).
 
-destrier **bootstraps** the upstream `specify` CLI (no vendoring, same as
-gitnexus/roborev) and integrates through spec-kit's **own extension-hook API** —
-it never forks a spec-kit command, so `specify self upgrade` keeps working. The
-integration is two layers: the plugin ships the bridge extension
-(`spec-kit-ext/`), and per repo `specify extension add … --dev` installs it into
-`.specify/`.
+destrier **bootstraps** the `specify` CLI and integrates via spec-kit's
+**extension-hook API**, never forking a command, so `specify self upgrade` keeps
+working. Three optional, prompted bridges:
 
-Three optional (prompted, never auto-run) bridges:
+- **after `/speckit-specify`** → create one structured GitHub issue from the spec
+  (issue-first). Default **links + summarizes** the spec (`spec.md` stays
+  canonical); per-repo `.destrier/issue.config` sets labels/project/body-mode/etc.
+  The de-identification gate runs before publishing; idempotent.
+- **after `/speckit-plan`** → a **link-only** OKF knowledgebase concept pointing at
+  `plan.md` (never a copy).
+- **after `/speckit-taskstoissues`** → `flow-metrics` over the resulting issues.
 
-- after `/speckit-specify` — create one structured GitHub feature issue from the
-  spec (the "issue-first" practice). By default it **links and summarizes** the
-  spec (`spec.md` stays canonical); a per-repo `.destrier/issue.config` can set
-  labels, project, body mode (`summary`/`full`), title prefix, assignee, or
-  milestone. The de-identification gate runs on the body before publishing, and
-  it is idempotent. Project-specific config stays in the project, never in destrier;
-- after `/speckit-plan` — record the plan's durable decisions as a **link-only**
-  OKF knowledgebase concept (a pointer to `plan.md`, never a copy);
-- after `/speckit-taskstoissues` — run `flow-metrics` over the GitHub issues the
-  tasks became (`tasks → issues → metrics`).
+The **`spec-driven-brainstorming`** skill makes brainstorming the front-end for
+authoring: brainstorm → distill → `/speckit-constitution` or `/speckit-specify`.
+Seed the constitution from `templates/destrier-constitution-values.md` (input, not
+a replacement).
 
-The **`spec-driven-brainstorming`** skill makes collaborative brainstorming the
-front-end for authoring: brainstorm the intent, distill to a brief, then hand it
-to `/speckit-constitution` or `/speckit-specify` and continue the speckit loop.
-Establish principles with `/speckit-constitution`, fed destrier's house rules from
-`templates/destrier-constitution-values.md` (it is *input* to the command, not a
-replacement for `.specify/memory/constitution.md`).
-
-- **Requirements:** `uv` and `python3 >= 3.11` (verified by `/destrier-spec-init`).
-- **Versioning:** `/destrier-spec-init` installs `specify` `v0.11.6` on a fresh
-  setup. Compatibility is governed by the bridge extension's `requires` range
-  (`>=0.11,<0.12`), so a pre-existing `0.11.x` is accepted and anything outside
-  the range is rejected with upgrade instructions. Upgrade within the range via
-  `specify self upgrade --tag <tag>`, and bump the range in lockstep when moving
-  to a new spec-kit minor.
-- **Privacy:** **set `DESTRIER_PRIVATE_DENYLIST` before authoring specs.** Spec
-  free-text is committed and scanned by the security gate; private codenames must
-  not leak — especially into a public repo.
-- **Right-sized for plugins:** for a shell/markdown project with no app build,
-  `data-model.md`/`contracts/`/`quickstart.md` are N/A; the spec → tasks →
-  implement spine is the working subset.
-
-## Privacy
-
-destrier ships **no** personal content. A generic de-identification denylist
-(`templates/identifying-tokens.denylist`) flags structural leaks (absolute home
-paths, secrets). To guard your own project codenames, add them to a local,
-gitignored file and point `DESTRIER_PRIVATE_DENYLIST` at it.
+Needs `uv` + `python3 >= 3.11`. Pinned to `specify v0.11.6`; any `0.11.x` is
+accepted (the extension's `>=0.11,<0.12` range) — upgrade via
+`specify self upgrade --tag`. **Set `DESTRIER_PRIVATE_DENYLIST` before authoring
+specs** (spec text is committed and scanned). For a shell/markdown plugin,
+`data-model.md`/`contracts/`/`quickstart.md` are N/A.
 
 ## Requirements
 
-`git`, `rg` (ripgrep), and `jq`. Node + npm for gitnexus; `python3` and `gh` for
-flow-metrics; `curl` for the roborev installer; `uv` + `python3 >= 3.11` for the
-opt-in Spec-Driven Development workflow (`/destrier-spec-init`).
+`git`, `rg`, `jq` (core); Node + npm (gitnexus); `python3` + `gh` (flow-metrics);
+`curl` (roborev); `uv` + `python3 >= 3.11` (SDD). `/destrier-setup` verifies all
+and prints install commands; `bash scripts/bootstrap.sh --install-deps` installs
+the missing ones (brew/apt/dnf/yum), `--check` just reports.
 
-`/destrier-setup` **verifies all of these** and prints the exact install command
-for anything missing. Run `bash scripts/bootstrap.sh --install-deps` to have
-destrier install the missing ones via your package manager (brew/apt/dnf/yum), or
-`bash scripts/bootstrap.sh --check` to just report status without changes.
+## Privacy
+
+destrier ships **no** personal content. A generic denylist
+(`templates/identifying-tokens.denylist`) flags structural leaks (home paths,
+secrets); add your own codenames to a gitignored file via `DESTRIER_PRIVATE_DENYLIST`.
 
 ## Development
 
@@ -144,8 +125,26 @@ bash test/run.sh                          # run the test suite
 bash scripts/security-scan.sh --tree .    # de-identification + secret scan
 ```
 
-Every commit passes the security scan before it lands; see
-`docs/design/` for the design spec.
+Every commit passes the security scan before it lands; see `docs/design/`.
+
+## Built on
+
+A thin, credited layer over open-source work — bootstrapped, not vendored:
+
+- **[spec-kit](https://github.com/github/spec-kit)** (GitHub) — Spec-Driven
+  Development toolkit (`specify` CLI + extension API).
+- **[gitnexus](https://github.com/abhigyanpatwari/GitNexus)** (Abhigyan Patwari) —
+  code knowledge graph + MCP.
+- **[roborev](https://roborev.io)** — multi-agent AI code review.
+- **[superpowers](https://github.com/obra/superpowers)** (Jesse Vincent) — the
+  `brainstorming` skill behind `spec-driven-brainstorming`.
+- **[Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)**
+  (Google Cloud) — the `session-handover` KB is a strict OKF v0.1 bundle.
+- **[uv](https://github.com/astral-sh/uv)** (Astral) — installs the pinned spec-kit CLI.
+- **[Claude Code](https://claude.com/claude-code)** (Anthropic) — the host platform.
+
+Each is independently maintained; review upstream source before installing what
+destrier bootstraps.
 
 ## License
 
