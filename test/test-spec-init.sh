@@ -60,7 +60,12 @@ done
 # ---------------------------------------------------------------------------
 tag="$(grep -E '^SPECKIT_TAG=' "$SPEC_INIT" | sed 's/.*"v\([0-9.]*\)".*/\1/')"
 mm="$(printf '%s' "$tag" | cut -d. -f1-2)"
-assert_contains "$rangeval" ">=$mm" "pinned tag minor ($mm) matches range lower bound"
+maj="$(printf '%s' "$mm" | cut -d. -f1)"; min="$(printf '%s' "$mm" | cut -d. -f2)"
+nextmm="$maj.$((min + 1))"
+# Validate BOTH bounds so the install pin (SPECKIT_TAG) and the compat range
+# cannot drift: lower bound == the pinned minor, upper bound == the next minor.
+assert_contains "$rangeval" ">=$mm"     "range lower bound matches the pinned tag minor ($mm)"
+assert_contains "$rangeval" "<$nextmm"  "range upper bound is the next minor ($nextmm)"
 
 # ---------------------------------------------------------------------------
 # 3) Prereq detection (test seams; env-independent)
@@ -122,6 +127,15 @@ STUB
   assert_eq "$ROOT" "$(cat "$workm/.git/destrier-root" 2>/dev/null)" "git-dir pointer written on migration"
   rm -rf "$workm"
 
+  # If the legacy pointer cannot be removed (here: it's a non-empty dir, so `rm -f`
+  # without -r fails), the script must report it and exit non-zero, not claim ready.
+  workr="$(mktemp -d)"
+  ( cd "$workr" && git init -q && mkdir -p .specify/extensions/destrier-sdd/.destrier-root/keep )
+  o9="$( ( cd "$workr" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r9=$?
+  rm -rf "$workr"
+  assert_exit_code 1 "$r9" "unremovable legacy pointer exits non-zero"
+  assert_contains "$o9" "could not remove the legacy pointer" "legacy-pointer removal failure is reported"
+
   # An incompatible specify version must fail BEFORE any repo mutation.
   cat > "$bin/specify" <<'STUB'
 #!/usr/bin/env bash
@@ -135,10 +149,27 @@ STUB
   chmod +x "$bin/specify"
   workv="$(mktemp -d)"; ( cd "$workv" && git init -q )
   o4="$( ( cd "$workv" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r4=$?
-  assert_exit_code 1 "$r4" "incompatible specify version exits non-zero"
-  assert_contains "$o4" "outside destrier's supported range" "version gate explains the mismatch"
-  if [ -e "$workv/.specify" ]; then fail "repo was mutated despite an incompatible version"; else echo "  ok: no repo mutation on incompatible version"; fi
+  assert_exit_code 1 "$r4" "too-old specify version exits non-zero"
+  assert_contains "$o4" "outside destrier's supported range" "version gate explains the mismatch (too old)"
+  if [ -e "$workv/.specify" ]; then fail "repo was mutated despite an incompatible version"; else echo "  ok: no repo mutation on too-old version"; fi
   rm -rf "$workv"
+
+  # A version at/above the range's upper bound must also be rejected (both bounds).
+  cat > "$bin/specify" <<'STUB'
+#!/usr/bin/env bash
+case "$1" in
+  --version) echo "specify 0.12.0" ;;
+  init)      mkdir -p .specify/memory ;;
+  extension) mkdir -p .specify/extensions/destrier-sdd ;;
+esac
+exit 0
+STUB
+  chmod +x "$bin/specify"
+  workn="$(mktemp -d)"; ( cd "$workn" && git init -q )
+  o8="$( ( cd "$workn" && PATH="$bin:$PATH" CLAUDE_PLUGIN_ROOT="$ROOT" bash "$SPEC_INIT" ) 2>&1 )"; r8=$?
+  assert_exit_code 1 "$r8" "too-new specify version (>= upper bound) exits non-zero"
+  if [ -e "$workn/.specify" ]; then fail "repo was mutated despite a too-new version"; else echo "  ok: no repo mutation on too-new version"; fi
+  rm -rf "$workn"
 
   # A failing extension install must surface as a non-zero exit (not a false "ready").
   cat > "$bin/specify" <<'STUB'

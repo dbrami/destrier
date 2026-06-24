@@ -51,6 +51,17 @@ py_ok() {
   python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null
 }
 
+# ver_lt A B: succeed (exit 0) iff dotted version A is strictly less than B.
+# Pure bash (3.2-safe) — avoids `sort -V`, which stock macOS sort lacks.
+ver_lt() {
+  local A="$1" B="$2" a1 a2 a3 b1 b2 b3 IFS=.
+  set -- $A; a1=${1:-0}; a2=${2:-0}; a3=${3:-0}
+  set -- $B; b1=${1:-0}; b2=${2:-0}; b3=${3:-0}
+  [ "$a1" -ne "$b1" ] && { [ "$a1" -lt "$b1" ]; return; }
+  [ "$a2" -ne "$b2" ] && { [ "$a2" -lt "$b2" ]; return; }
+  [ "$a3" -lt "$b3" ]
+}
+
 # --- prerequisite verification (uv, python3>=3.11, git) ---
 MISSING=0
 echo "destrier SDD prerequisite check"
@@ -106,7 +117,6 @@ if [ -z "$GIT_DIR" ]; then
 fi
 
 # --- 1. pinned specify CLI (no vendoring) ---
-PIN_MM="$(printf '%s' "$SPECKIT_TAG" | sed 's/^v//' | cut -d. -f1-2)"   # e.g. 0.11
 if have specify; then
   echo "specify already installed."
 else
@@ -134,20 +144,26 @@ fi
 
 # Enforce version compatibility BEFORE any repo mutation: an unsupported version
 # would otherwise init the repo and only fail later at `extension add`, leaving a
-# partial setup. The compatibility CONTRACT is the bridge extension's `requires`
-# range (>=0.11,<0.12 == the $PIN_MM minor); $SPECKIT_TAG (v0.11.6) is only the
-# version destrier installs fresh. So any $PIN_MM.x is accepted (matching the
-# extension), and we fail CLOSED if no version can be parsed.
+# partial setup. The SINGLE authoritative compatibility range is the bridge
+# extension's `requires.speckit_version` (e.g. >=0.11,<0.12); $SPECKIT_TAG is only
+# the version destrier installs fresh. Read both bounds from the manifest so the
+# two can never drift, and fail CLOSED on anything we cannot parse.
+RANGE="$(grep -E '^[[:space:]]*speckit_version:' "$EXT_DIR/extension.yml" 2>/dev/null | head -1 | sed "s/.*speckit_version:[[:space:]]*//; s/[\"' ]//g")"
+LOWER="$(printf '%s' "$RANGE" | sed -n 's/.*>=\([0-9][0-9.]*\).*/\1/p')"
+UPPER="$(printf '%s' "$RANGE" | sed -n 's/.*<\([0-9][0-9.]*\).*/\1/p')"
 SP_VER="$(specify --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-SP_MM="$(printf '%s' "$SP_VER" | cut -d. -f1-2)"
-if [ -z "$SP_MM" ]; then
+if [ -z "$SP_VER" ]; then
   echo "spec-init: could not determine the installed specify version." >&2
   echo "  Reinstall the pinned CLI, then re-run /destrier-spec-init:" >&2
   echo "    uv tool install specify-cli --force --from $SPECKIT_REF" >&2
   exit 1
 fi
-if [ "$SP_MM" != "$PIN_MM" ]; then
-  echo "spec-init: specify ${SP_VER} is outside destrier's supported range (${PIN_MM}.x; pinned $SPECKIT_TAG)." >&2
+if [ -z "$LOWER" ] || [ -z "$UPPER" ]; then
+  echo "spec-init: could not read a compatibility range from $EXT_DIR/extension.yml (requires.speckit_version)." >&2
+  exit 1
+fi
+if ver_lt "$SP_VER" "$LOWER" || ! ver_lt "$SP_VER" "$UPPER"; then
+  echo "spec-init: specify ${SP_VER} is outside destrier's supported range ($RANGE; pinned $SPECKIT_TAG)." >&2
   echo "  Upgrade to the pinned version, then re-run /destrier-spec-init:" >&2
   echo "    specify self upgrade --tag $SPECKIT_TAG" >&2
   exit 1
@@ -183,8 +199,12 @@ if [ "$EXT_OK" = 1 ] && [ -d "$DEST_EXT" ]; then
   else
     # Migrate away from the legacy working-tree pointer: older spec-init versions
     # wrote the absolute path here, where it could be committed/leak. Remove it now
-    # that the leak-safe git-dir pointer is in place.
-    rm -f "$DEST_EXT/.destrier-root"
+    # that the leak-safe git-dir pointer is in place, and verify it is gone.
+    rm -f "$DEST_EXT/.destrier-root" 2>/dev/null
+    if [ -e "$DEST_EXT/.destrier-root" ]; then
+      echo "spec-init: could not remove the legacy pointer $DEST_EXT/.destrier-root (absolute path may leak)." >&2
+      EXT_OK=0
+    fi
   fi
 else
   EXT_OK=0
