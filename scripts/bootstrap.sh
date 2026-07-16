@@ -16,7 +16,7 @@ set -uo pipefail
 
 DESTRIER_HOME="${DESTRIER_HOME:-$HOME/.destrier}"
 GN_DIR="$DESTRIER_HOME/vendor/gitnexus"
-GN_REPO="https://github.com/abhigyanpatwari/GitNexus.git"
+GN_REPO="${DESTRIER_GITNEXUS_REPO:-https://github.com/abhigyanpatwari/GitNexus.git}"
 ROBOREV_INSTALL="https://roborev.io/install.sh"
 
 MODE=run
@@ -159,6 +159,7 @@ if [ "$MODE" = check ]; then
 fi
 
 # --- gitnexus: clone + build from git (Node only; never vendored) ---
+BOOTSTRAP_FAILED=0
 if have git && have node && have npm; then
   mkdir -p "$DESTRIER_HOME/vendor"
   if [ -d "$GN_DIR/.git" ]; then
@@ -168,8 +169,29 @@ if have git && have node && have npm; then
     echo "Cloning gitnexus..."
     git clone --depth 1 "$GN_REPO" "$GN_DIR"
   fi
-  ( cd "$GN_DIR" && npm install && npm run build )
-  echo "gitnexus built at $GN_DIR"
+  # Upstream is now a monorepo WITHOUT npm workspaces: the CLI package moved
+  # into gitnexus/, and per upstream CONTRIBUTING.md the gitnexus-shared
+  # package must be installed and built before it. Legacy flat layout
+  # (everything at the repo root) is kept for older checkouts.
+  GN_BUILD_OK=0
+  if [ -f "$GN_DIR/gitnexus/package.json" ]; then
+    GN_PKG_DIR="$GN_DIR/gitnexus"
+    if ( cd "$GN_DIR/gitnexus-shared" && npm install && npm run build ) \
+       && ( cd "$GN_PKG_DIR" && npm install && npm run build ); then
+      GN_BUILD_OK=1
+    fi
+  else
+    GN_PKG_DIR="$GN_DIR"
+    if ( cd "$GN_PKG_DIR" && npm install && npm run build ); then
+      GN_BUILD_OK=1
+    fi
+  fi
+  if [ "$GN_BUILD_OK" = 1 ]; then
+    echo "gitnexus built at $GN_PKG_DIR"
+  else
+    echo "gitnexus build failed in $GN_PKG_DIR (see npm output above); re-run /destrier-setup after fixing." >&2
+    BOOTSTRAP_FAILED=1
+  fi
 else
   echo "Skipping gitnexus: needs git + Node/npm (see above), then re-run /destrier-setup." >&2
 fi
@@ -188,4 +210,8 @@ if have roborev; then
   roborev skills install || true
 fi
 
+if [ "$BOOTSTRAP_FAILED" = 1 ]; then
+  echo "destrier setup finished with errors (see above)." >&2
+  exit 1
+fi
 echo "destrier setup complete. Restart Claude Code so the gitnexus MCP server loads."

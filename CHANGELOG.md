@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-07-16
+
+### Fixed
+- **Bootstrap builds gitnexus's new monorepo layout** — upstream GitNexus moved
+  the CLI package from the repo root into `gitnexus/` (a monorepo *without* npm
+  workspaces), which made `npm run build` at the clone root fail with
+  `Missing script: "build"`. `scripts/bootstrap.sh` now detects the layout and
+  runs upstream's documented two-stage build (`gitnexus-shared` first, then
+  `gitnexus/`); the legacy flat layout is still supported.
+- **Build failures are no longer reported as success** — the bootstrap printed
+  `gitnexus built at ...` and exited 0 even when the build failed. It now
+  reports the failure and exits non-zero.
+- **MCP launcher resolves the monorepo entry point** —
+  `scripts/gitnexus-mcp-launch.sh` prefers `gitnexus/dist/cli/index.js` (so a
+  stale pre-monorepo root `dist/` never shadows a fresh build) and falls back
+  to the flat layout.
+
+### Added
+- `DESTRIER_GITNEXUS_REPO` env seam so tests (and users) can point the
+  bootstrap at an alternate gitnexus repo; `test/test-bootstrap.sh` gains six
+  integration tests using a local fixture monorepo (build ordering, launcher
+  resolution for both layouts, failure honesty).
+
 ## [0.6.0] - 2026-06-24
 
 ### Added
