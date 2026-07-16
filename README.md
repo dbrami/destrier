@@ -30,12 +30,12 @@ destrier is its own Claude Code marketplace — one command each:
 
 ```text
 /plugin marketplace add dbrami/destrier
-/plugin install destrier
-/destrier-setup
+/plugin install destrier@destrier
+/destrier:destrier-setup
 ```
 
 `/plugin install` loads the skills, hooks, commands, and gitnexus MCP
-registration. `/destrier-setup` bootstraps the external tools; restart Claude Code
+registration. `/destrier:destrier-setup` bootstraps the external tools; restart Claude Code
 afterward so the MCP server loads.
 
 ## What it bundles
@@ -56,16 +56,16 @@ afterward so the MCP server loads.
 
 | Command | What it does |
 |---------|--------------|
-| `/destrier-setup` | Build gitnexus from git and install roborev via its official installer. |
-| `/destrier-spec-init` | Opt-in: set up Spec-Driven Development (spec-kit) in the current repo. |
-| `/destrier-kb-init` | Initialize today's KB session summary (OKF v0.1) and show recent ones. |
-| `/destrier-precommit-install` | Install the critical-path guard as this repo's pre-commit hook. |
-| `/destrier-security-review` | De-identification + secret scan of pending changes (plus roborev when available). |
-| `/destrier-flow-metrics` | Throughput and cycle-time report for one or more repos. |
+| `/destrier:destrier-setup` | Build gitnexus from git and install roborev via its official installer. |
+| `/destrier:destrier-spec-init` | Opt-in: set up Spec-Driven Development (spec-kit) in the current repo. |
+| `/destrier:destrier-kb-init` | Initialize today's KB session summary (OKF v0.1) and show recent ones. |
+| `/destrier:destrier-precommit-install` | Install the critical-path guard as this repo's pre-commit hook. |
+| `/destrier:destrier-security-review` | De-identification + secret scan of pending changes (plus roborev when available). |
+| `/destrier:destrier-flow-metrics` | Throughput and cycle-time report for one or more repos. |
 
 ## External tools (bootstrapped, not vendored)
 
-`/destrier-setup` installs both into `~/.destrier/vendor/`:
+`/destrier:destrier-setup` installs both into `~/.destrier/vendor/`:
 
 - **[gitnexus](https://github.com/abhigyanpatwari/GitNexus)** — cloned and built
   (`npm install && npm run build`; needs Node + git), registered as an MCP server.
@@ -80,7 +80,7 @@ afterward so the MCP server loads.
 
 Bring GitHub [spec-kit](https://github.com/github/spec-kit)'s SDD loop —
 `constitution → specify → plan → tasks → implement` — into a repo with
-`/destrier-spec-init` (opt-in, per-repo).
+`/destrier:destrier-spec-init` (opt-in, per-repo).
 
 destrier **bootstraps** the `specify` CLI and integrates via spec-kit's
 **extension-hook API**, never forking a command, so `specify self upgrade` keeps
@@ -108,7 +108,7 @@ specs** (spec text is committed and scanned). For a shell/markdown plugin,
 ## Requirements
 
 `git`, `rg`, `jq` (core); Node + npm (gitnexus); `python3` + `gh` (flow-metrics);
-`curl` (roborev); `uv` + `python3 >= 3.11` (SDD). `/destrier-setup` verifies all
+`curl` (roborev); `uv` + `python3 >= 3.11` (SDD). `/destrier:destrier-setup` verifies all
 and prints install commands; `bash scripts/bootstrap.sh --install-deps` installs
 the missing ones (brew/apt/dnf/yum), `--check` just reports.
 
